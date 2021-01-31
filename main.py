@@ -1,36 +1,55 @@
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
+from openpyxl.utils import FORMULAE
+import json
+import sys
 
 
-def alphanum_generator(from_num, to_num):
-    """ yield an xlsx column format from number up to another number
-        from_num must be greater than 1
-        1 will yield A (chr(65) == "A" )
-        26 will yield Z ( hr(90) == "Z")
-    """
-    if(from_num <= 0):
-        raise ValueError
-    counter = 0
-    while counter <= to_num:
-        yield chr(64+from_num+counter)
+FOOD_CONFIG_PATH = "food_config.json"
+LOAD_WORKBOOK_PATH = sys.argv[1]
+OUT_WORKBOOK_SUFFIX = "_out"
 
 
-def create_test_workbook():
-    workbook = Workbook()
-    sheet = workbook.active
-    food_dic = {"1111": "cumcumber", "1112": "tomato",
-                "1114": "pepper", "2222": "milk", "3142": "meat"}
+def get_out_filepath():
+    prefix, delimiter, postfix = LOAD_WORKBOOK_PATH.rpartition(".")
+    return prefix + OUT_WORKBOOK_SUFFIX + delimiter + postfix
 
-    # init the first two row with names and ids
 
-    for i in range(len(food_dic)):
-        sheet["B"+i] = "hello"
-        sheet["C"+i] = "world!"
+def load_food_config():
+    with open(FOOD_CONFIG_PATH, "r") as f:
+        return json.load(f)
 
-    workbook.save(filename="hello_world.xlsx")
+
+def get_price_of_food_id(jf, id):
+    for food in jf["foods"]:
+        if(str(id) == food["id"]):
+            return food["price"]
+    raise ValueError(f"There is not a food id of: {id}")
 
 
 def main():
-    pass
+    jf = load_food_config()
+    workbook = load_workbook(filename=LOAD_WORKBOOK_PATH)
+    sheet = workbook.active
+
+    for col in sheet.iter_cols(min_row=1, min_col=2, max_row=sheet.max_row, max_col=sheet.max_column):
+        # if(col[0].value == "" or col[0].value == None):
+        #     break
+
+        col_food_price = get_price_of_food_id(jf, col[0].value)
+        for cell in col:
+            if cell.row == 1 or cell.row == 2:
+                continue
+            cell_value = cell.value if cell.value else 0
+            cell.value = float(cell_value)*float(col_food_price)
+
+    for row in sheet.iter_rows(min_row=3, min_col=2, max_col=sheet.max_column, max_row=sheet.max_row):
+        # if(row[0].value == "" or row[0].value == None):
+        #     break
+        sum_cell = sheet.cell(row=row[0].row, column=row[-1].column+1)
+        last_cell = sheet.cell(row=row[0].row, column=row[-1].column)
+        sum_cell.value = f"=SUM(B{sum_cell.row}:{last_cell.column_letter}{sum_cell.row})"
+
+    workbook.save(filename=get_out_filepath())
 
 
 if __name__ == "__main__":
