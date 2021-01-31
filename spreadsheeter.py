@@ -2,6 +2,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.utils import FORMULAE
 import json
 import sys
+import tkinter as tk
 
 
 FOOD_CONFIG_PATH = "food_config.json"
@@ -29,7 +30,7 @@ def get_price_of_food_id(jf, id):
     raise ValueError(f"There is not a food id of: {id}")
 
 
-def main():
+def main2():
     jf = load_food_config()
     workbook = load_workbook(filename=LOAD_WORKBOOK_PATH)
     sheet = workbook.active
@@ -48,6 +49,30 @@ def main():
         sum_cell.value = f"=SUM(B{sum_cell.row}:{last_cell.column_letter}{sum_cell.row})"
 
     workbook.save(filename=get_out_filepath())
+
+
+def main():
+    window = tk.Tk()
+    # to rename the title of the window
+    window.title("The Spreadsheeter")
+    # pack is used to show the object in the window
+    tk.Label(
+        window, text="Please select the execl file: ").pack()
+
+    ent1 = tk.Entry(window, font=40)
+    ent1.grid(row=2, column=2)
+
+    def browsefunc():
+        filename = tk.filedialog.askopenfilename(filetypes=(
+            ("Execl Files", "*.xlsx"), ("All files", "*.*")))
+        ent1.insert(tk.END, filename)  # add this
+
+    b1 = tk.Button(window, text="DEM", font=40, command=browsefunc)
+    b1.pack()
+
+    tk.Button(window, text="Next").pack()
+
+    window.mainloop()
 
 
 if __name__ == "__main__":
