@@ -3,3 +3,4 @@ __pycache__
 build
 spreadsheeter.spec
 .vascode
+dist

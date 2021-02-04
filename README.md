@@ -10,11 +10,18 @@ And then the program SPREADSHEET them - for each product the program multuply th
 
 At the End the program add in the last row a SUM of how much money the client must pay.
 
+## Install
+
+Install `python3`, and then install the `openpyxl` module. (with `pip install openpyxl` in the terminal)
+
+DONE! now you can run the script - from the terminal/cmd or double click it.
+
+If you want you can compile the program with `pyinstaller`:
+
+- install the module - `pip install pyinstaller`
+- run the command (be in the dir of the script) - `pyinstaller --onefile spreadsheeter.py`
+
 ## Useage
-
-In the `dist` folder there is an `.exe` file use it if you want the program.
-
-(If you want the code you know what to do.)
 
 The program open up with a simple UI: 2 'Browse' button and one 'Finish' button.
 What to do:
