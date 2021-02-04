@@ -4,3 +4,4 @@ build
 spreadsheeter.spec
 .vascode
 dist
+.DS_Store
