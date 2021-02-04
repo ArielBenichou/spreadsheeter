@@ -20,9 +20,9 @@ def get_out_filepath():
 
 
 def get_price_of_food_id(prices_sheet, id):
-    for row in prices_sheet.iter_rows(min_row=2, max_row=prices_sheet.max_row, max_col=prices_sheet.max_column):
-        if(row[0].value == id):
-            return row[-1].value
+    for col in prices_sheet.iter_cols(min_col=2, max_row=prices_sheet.max_row, max_col=prices_sheet.max_column):
+        if(col[0].value == id):
+            return col[-1].value
 
     update_debug_label("There is anid in the table that is not in the prices!")
 
@@ -32,24 +32,41 @@ def calculate_spreadsheet():
         update_debug_label("You didn't select a table!")
         return
 
-    table_workbook = load_workbook(filename=EXECLS_PATHS["Table"])
-    table_sheet = table_workbook.active
+    table_workbook = load_workbook(
+        filename=EXECLS_PATHS["Table"], data_only=True)
+    # TODO: loop thourgh all the sheets
+    # for sheet in table_workbook.worksheets:
+    table_sheet = table_workbook.worksheets[0]
 
     prices_workbook = load_workbook(filename=EXECLS_PATHS["Prices"])
     prices_sheet = prices_workbook.active
 
-    for col in table_sheet.iter_cols(min_row=1, min_col=2, max_row=table_sheet.max_row, max_col=table_sheet.max_column):
+    # we save the max_column so when we create the sum cell the max_columns number don't grow
+    table_sheet_max_columns = table_sheet.max_column
+    for col in table_sheet.iter_cols(min_row=1, min_col=2, max_row=table_sheet.max_row, max_col=table_sheet_max_columns):
+        # if the id in the client worksheet is None or blank we skip the column
+        if(col[0].value == None or col[0].value == ""):
+            continue
         col_food_price = get_price_of_food_id(prices_sheet, col[0].value)
-        for cell in col:
-            if cell.row == 1 or cell.row == 2:
-                continue
-            cell_value = cell.value if cell.value else 0
-            cell.value = float(cell_value)*float(col_food_price)
 
-    for row in table_sheet.iter_rows(min_row=3, min_col=2, max_col=table_sheet.max_column, max_row=table_sheet.max_row):
-        sum_cell = table_sheet.cell(row=row[0].row, column=row[-1].column+1)
-        last_cell = table_sheet.cell(row=row[0].row, column=row[-1].column)
-        sum_cell.value = f"=SUM(B{sum_cell.row}:{last_cell.column_letter}{sum_cell.row})"
+        # iterate through all the cell of current column and multiply by the price_id
+        # we start at the third row, because the first two are the id and the product name
+        # if this row don't have a client name we skip it except the last row, whice is a sum row of each column
+        for cell in col[2:]:
+            cellvalue_first_column_of_current_row = [r for r in table_sheet.iter_rows(
+                min_row=cell.row, max_row=cell.row)][0][0].value
+            if cellvalue_first_column_of_current_row == None and cell.row != table_sheet.max_row:
+                continue
+
+            cell.value = cell.value if cell.value else 0
+            cell.value = float(cell.value)*float(col_food_price)
+            # create or upated the sum cell of each row
+            sum_cell = table_sheet.cell(
+                row=cell.row, column=table_sheet_max_columns+1)
+            if sum_cell.value != None:
+                sum_cell.value = sum_cell.value + cell.value
+            else:
+                sum_cell.value = 0 + cell.value
 
     table_workbook.save(filename=get_out_filepath())
     update_debug_label("Done!", "green")
